@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
-using System.Windows.Forms;
 using UI = Gtk.Builder.ObjectAttribute;
 
 namespace CS2AutoScreenshot
@@ -63,18 +62,7 @@ namespace CS2AutoScreenshot
 
         private void MainWindow_Clicked(object? sender, EventArgs e)
         {
-            var vmapFilePath = "";
-            using (OpenFileDialog openFileDialog = new OpenFileDialog())
-            {
-                openFileDialog.Filter = "VMAP Files|*.vmap|All files|*.*";
-                openFileDialog.Title = "Open VMAP File";
-                openFileDialog.FilterIndex = 1;
-                openFileDialog.RestoreDirectory = true;
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    vmapFilePath = openFileDialog.FileName;
-                }
-            }
+            NativeFileDialogs.Net.Nfd.OpenDialog(out string? vmapFilePath, new Dictionary<string, string> { { "VMAP Files", "vmap" } });
 
             if (!string.IsNullOrEmpty(vmapFilePath))
             {

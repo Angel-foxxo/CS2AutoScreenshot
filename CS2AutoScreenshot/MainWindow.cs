@@ -1,3 +1,4 @@
+using Gdk;
 using Gtk;
 using RadGenCore.Components;
 using System;
@@ -9,10 +10,10 @@ using UI = Gtk.Builder.ObjectAttribute;
 
 namespace CS2AutoScreenshot
 {
-    class MainWindow : Window
+    class MainWindow : Gtk.Window
     {
         [UI]
-        Gtk.Button? SelectVMAP = null;
+        Button? SelectVMAP = null;
 
         [UI]
         TextBuffer? MainTextBuffer = null;
@@ -34,15 +35,15 @@ namespace CS2AutoScreenshot
                     {
                         if (iconStream != null)
                         {
-                            Gdk.Pixbuf originalIcon = new Gdk.Pixbuf(iconStream);
+                            Pixbuf originalIcon = new Pixbuf(iconStream);
 
                             int[] sizes = new int[] { 16, 32, 48, 64, 128, 256 };
-                            List<Gdk.Pixbuf> iconList = new List<Gdk.Pixbuf>();
+                            List<Pixbuf> iconList = new List<Pixbuf>();
 
                             foreach (int size in sizes)
                             {
-                                Gdk.Pixbuf scaledIcon = originalIcon.ScaleSimple(
-                                    size, size, Gdk.InterpType.Hyper);
+                                Pixbuf scaledIcon = originalIcon.ScaleSimple(
+                                    size, size, InterpType.Hyper);
                                 iconList.Add(scaledIcon);
                             }
 
@@ -63,6 +64,12 @@ namespace CS2AutoScreenshot
         private void MainWindow_Clicked(object? sender, EventArgs e)
         {
             NativeFileDialogs.Net.Nfd.OpenDialog(out string? vmapFilePath, new Dictionary<string, string> { { "VMAP Files", "vmap" } });
+
+            if(System.IO.Path.GetExtension(vmapFilePath) != ".vmap")
+            {
+                MainTextBuffer!.Text = "Selected file is not a vmap!";
+                return;
+            }
 
             if (!string.IsNullOrEmpty(vmapFilePath))
             {
@@ -99,6 +106,12 @@ namespace CS2AutoScreenshot
                 //kills previous servercommand just incase user ran this before
                 string finalOutputCommand = "sv_cheats 1;noclip 1;ent_fire cmd kill;ent_create point_servercommand {targetname cmd};" +
                     $"screenshot_subdir {screenshotPath}";
+
+                if(pointCameras.Count == 0)
+                {
+                    MainTextBuffer!.Text = "Selected vmap has no point_camera entities!";
+                    return;
+                }
 
                 for (int i = 0; i < pointCameras.Count; i++)
                 {

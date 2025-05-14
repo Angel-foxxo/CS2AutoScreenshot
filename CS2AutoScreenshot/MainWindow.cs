@@ -3,6 +3,8 @@ using RadGenCore.Components;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
 using UI = Gtk.Builder.ObjectAttribute;
 
@@ -21,6 +23,38 @@ namespace CS2AutoScreenshot
         private MainWindow(Builder builder) : base(builder.GetRawOwnedObject("MainWindow"))
         {
             builder.Autoconnect(this);
+
+            try
+            {
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                string resourceName = "CS2AutoScreenshot.misc.screenshot.png";
+                var resource = assembly.GetManifestResourceStream(resourceName);
+                if (resource != null)
+                {
+                    using (Stream iconStream = resource)
+                    {
+                        if (iconStream != null)
+                        {
+                            Gdk.Pixbuf originalIcon = new Gdk.Pixbuf(iconStream);
+
+                            int[] sizes = new int[] { 16, 32, 48, 64, 128, 256 };
+                            List<Gdk.Pixbuf> iconList = new List<Gdk.Pixbuf>();
+
+                            foreach (int size in sizes)
+                            {
+                                Gdk.Pixbuf scaledIcon = originalIcon.ScaleSimple(
+                                    size, size, Gdk.InterpType.Hyper);
+                                iconList.Add(scaledIcon);
+                            }
+
+                            DefaultIconList = iconList.ToArray();
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
 
             SelectVMAP!.Clicked += MainWindow_Clicked;
 
@@ -84,7 +118,7 @@ namespace CS2AutoScreenshot
                     var cameraTransforms = camera.Transforms.Decompose();
                     float fov = 90;
 
-                    if(camera.KeyValues.HasHey("fov"))
+                    if (camera.KeyValues.HasHey("fov"))
                     {
                         fov = camera.KeyValues.GetValue<float>("fov");
                     }

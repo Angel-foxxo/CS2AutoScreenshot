@@ -1,6 +1,7 @@
 using Gdk;
 using Gtk;
 using RadGenCore.Components;
+using SharpGLTF.Schema2;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -19,6 +20,18 @@ namespace CS2AutoScreenshot
         TextBuffer? MainTextBuffer = null;
 
         public MainWindow() : this(new Builder("MainWindow.glade")) { }
+
+        private class Camera
+        {
+            public RadgenScene.Transforms Transforms { private set; get; }
+            public float FOV { private set; get; }
+
+            public Camera(RadgenScene.Transforms transforms, float fOV)
+            {
+                Transforms = transforms;
+                FOV = fOV;
+            }
+        }
 
         private MainWindow(Builder builder) : base(builder.GetRawOwnedObject("MainWindow"))
         {
@@ -80,15 +93,11 @@ namespace CS2AutoScreenshot
 
                 var parsedScene = VmapParser.ParseVmap(vmapFilePath, context);
 
-                List<RadgenScene.Entity> pointCameras = new();
+                List<Camera> pointCameras = new();
 
                 if (parsedScene != null)
                 {
-                    pointCameras.AddRange(GetPointCamerasFromScene(parsedScene));
-                    foreach (var scene in parsedScene.ChildScenes)
-                    {
-                        pointCameras.AddRange(GetPointCamerasFromScene(scene));
-                    }
+                    pointCameras = GetPointCamerasFromScene(parsedScene, RadgenScene.DefaultTransforms);
                 }
 
                 //make it file system safe
@@ -117,13 +126,7 @@ namespace CS2AutoScreenshot
                 {
                     var camera = pointCameras[i];
                     var cameraTransforms = camera.Transforms.Decompose();
-                    float fov = 90;
-
-                    if (camera.KeyValues.HasHey("fov"))
-                    {
-                        fov = camera.KeyValues.GetValue<float>("fov");
-                    }
-
+                    
                     //make each screenshot take 10 ticks, just to make sure IO has time to process everything
                     //+ 1 second delay so the first screenshot doesn't start with 0 delay, thats too early, the point_servercommmand won't exist yet
                     //also i like the initial delay because the first pic wont just strobe away
@@ -131,7 +134,7 @@ namespace CS2AutoScreenshot
 
                     finalOutputCommand += $"ent_fire worldent addoutput \"OnUser1>cmd>command>setpos {cameraTransforms.Origin.X} {cameraTransforms.Origin.Y} {cameraTransforms.Origin.Z - 64}>{delay}>1\";";
                     finalOutputCommand += $"ent_fire worldent addoutput \"OnUser1>cmd>command>setang {cameraTransforms.Angles.X} {cameraTransforms.Angles.Y} 0>{delay}>1\";";
-                    finalOutputCommand += $"ent_fire worldent addoutput \"OnUser1>cmd>command>fov_cs_debug {fov}>{delay}>1\";";
+                    finalOutputCommand += $"ent_fire worldent addoutput \"OnUser1>cmd>command>fov_cs_debug {camera.FOV}>{delay}>1\";";
                     //add extra tick delay just to make sure the screenshot is taken after the camera is in place
                     finalOutputCommand += $"ent_fire worldent addoutput \"OnUser1>cmd>command>png_screenshot {vmapName}>{delay + (tick * 2)}>1\";";
                 }
@@ -145,17 +148,41 @@ namespace CS2AutoScreenshot
             }
         }
 
-        private List<RadgenScene.Entity> GetPointCamerasFromScene(RadgenScene scene)
+        private List<Camera> GetPointCamerasFromScene(RadgenScene scene, RadgenScene.Transforms transforms)
         {
-            var returnList = new List<RadgenScene.Entity>();
+            var returnList = new List<Camera>();
             foreach (var entity in scene.Entities)
             {
                 var classname = entity.KeyValues.GetValue<string>("classname");
 
                 if (classname == "point_camera")
                 {
-                    returnList.Add(entity);
+                    var objTransforms = entity.Transforms;
+
+                    objTransforms *= transforms;
+
+                    float fov = 90;
+
+                    if (entity.KeyValues.HasHey("fov"))
+                    {
+                        fov = entity.KeyValues.GetValue<float>("fov");
+                    }
+
+                    returnList.Add(new Camera(objTransforms, fov));
                 }
+            }
+
+            foreach (var prefab in scene.ChildScenes)
+            {
+                returnList.AddRange(GetPointCamerasFromScene(prefab, scene.SceneTransform));
+            }
+
+            foreach (var instance in scene.Instances)
+            {
+                var childInstanceTransforms = instance.Transforms;
+                childInstanceTransforms *= transforms;
+
+                returnList.AddRange(GetPointCamerasFromScene(instance.InstanceScene, childInstanceTransforms));
             }
 
             return returnList;

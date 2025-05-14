@@ -92,61 +92,6 @@ namespace RadGenCore.Components
             }
         }
 
-        public class Mesh : SceneNode
-        {
-            public float[] Vertices;
-            public float[] Normals;
-            public Dictionary<VmapParser.RadGenType, List<int>> TriangleLists { get; private set; } = [];
-
-            public Vector4 RenderColor { get; set; }
-
-            public Mesh(IEnumerable<Vector3> vertices, IEnumerable<Vector3> normals, Transforms? transforms = null) : base(transforms)
-            {
-                var vertexList = vertices.ToList();
-                var normalList = normals.ToList();
-
-                Vertices = new float[vertexList.Count * 3];
-                Normals = new float[normalList.Count * 3];
-
-                for (var i = 0; i < vertexList.Count; i++)
-                {
-                    var newMeshVerticesIndex = i * 3;
-
-                    var vertex = vertexList[i];
-                    Vertices[newMeshVerticesIndex] = vertex.X;
-                    Vertices[newMeshVerticesIndex + 1] = vertex.Y;
-                    Vertices[newMeshVerticesIndex + 2] = vertex.Z;
-                }
-
-                for (var i = 0; i < normalList.Count; i++)
-                {
-                    var newMeshVerticesIndex = i * 3;
-
-                    var normal = normalList[i];
-                    Normals[newMeshVerticesIndex] = normal.X;
-                    Normals[newMeshVerticesIndex + 1] = normal.Y;
-                    Normals[newMeshVerticesIndex + 2] = normal.Z;
-                }
-            }
-
-            public void AddTriangles(VmapParser.RadGenType type, List<int> triangles)
-            {
-                if (triangles.Count % 3 != 0)
-                {
-                    throw new InvalidDataException($"Trying to add an invalid amount of indices to mesh with type '{type}', amount: '{triangles.Count}', needs to be divisible by 3 to form valid triangles!");
-                }
-
-                var typeEntryExists = TriangleLists.TryGetValue(type, out var triangleList);
-                if (!typeEntryExists || triangleList == null)
-                {
-                    triangleList = new List<int>();
-                    TriangleLists.Add(type, triangleList);
-                }
-
-                triangleList.AddRange(triangles);
-            }
-        }
-
         public class KeyValues
         {
             private Dictionary<string, string> _keyValues = [];
@@ -239,20 +184,12 @@ namespace RadGenCore.Components
         {
             public KeyValues KeyValues { get; private set; } = new();
 
-            public List<Mesh> Meshes { get; private set; } = [];
-
-            public bool IsMeshEntity { get; private set; } = false;
-            public bool IsPointEntity { get; private set; } = false;
-
             public Entity(Transforms? transforms = null, bool isMeshEntity = false, KeyValues? keyValues = null, bool isPointEntity = false) : base(transforms)
             {
                 if (keyValues != null)
                 {
                     KeyValues = keyValues;
                 }
-
-                IsMeshEntity = isMeshEntity;
-                IsPointEntity = isPointEntity;
             }
         }
 
@@ -263,18 +200,6 @@ namespace RadGenCore.Components
             public Instance(RadgenScene scene, Transforms? transforms = null) : base(transforms)
             {
                 InstanceScene = scene;
-            }
-        }
-
-        public List<Mesh> Meshes = [];
-
-        public void AddMesh(Mesh mesh)
-        {
-            Meshes.Add(mesh);
-
-            if (SceneTransform.TransformMatrix != DefaultTransforms.TransformMatrix)
-            {
-                mesh.Transforms *= SceneTransform;
             }
         }
 
@@ -324,19 +249,7 @@ namespace RadGenCore.Components
 
             if (SceneTransform.TransformMatrix != DefaultTransforms.TransformMatrix)
             {
-                // needs special treatment because for mesh entities the actual entity wont have transforms, it will only be the meshes
-                // because hammer is fucking weird
-                if (entity.IsMeshEntity)
-                {
-                    foreach (var mesh in entity.Meshes)
-                    {
-                        mesh.Transforms *= SceneTransform;
-                    }
-                }
-                else
-                {
-                    entity.Transforms *= SceneTransform;
-                }
+                entity.Transforms *= SceneTransform;
             }
         }
 

@@ -12,77 +12,12 @@ namespace RadGenCore.Components
 {
     public static class VmapParser
     {
-
         // all of this is just for logging
         // name of the vmap being processed currently, used in error messages
         private static string CurrentVmapName = "";
-        private static string ModelsLogBuffer = "";
-        private static string MeshesLogBuffer = "";
 
         static VmapParser()
         {
-        }
-
-        public static readonly List<RadGenType> RadGenTypes = new List<RadGenType>
-        {
-            // add new types here
-            new RadGenType("path", "materials/radgen/radgen_path.vmat"),
-            new RadGenType("cover", "materials/radgen/radgen_cover.vmat"),
-            new RadGenType("remove", "materials/radgen/radgen_remove.vmat"),
-            new RadGenType("overlap", "materials/radgen/radgen_overlap.vmat"),
-            new RadGenType("bombsite", new List<string> { "materials/radgen/radgen_bombsite.vmat", "materials/radgen/radgen_bombsite_a.vmat", "materials/radgen/radgen_bombsite_b.vmat" }, "func_bomb_target", true),
-            new RadGenType("buyzone", "materials/radgen/radgen_buyzone.vmat", "func_buyzone", true),
-            new RadGenType("rescue_zone", "materials/radgen/radgen_rescue_zone.vmat", "func_hostage_rescue", true),
-            new RadGenType("tint", "materials/radgen/radgen_tint.vmat")
-        };
-
-        public class RadGenType
-        {
-            public static int _IDCounter = -1;
-            public int ID = -1;
-            public string Name = "";
-            public string MeshEntityClassname = "";
-            public List<string> Materials = [];
-            public bool IsTransparent;
-
-            RadGenType(string name, string meshEntityClassname)
-            {
-                Name = name;
-                MeshEntityClassname = meshEntityClassname;
-
-                _IDCounter++;
-                ID = _IDCounter;
-            }
-
-            public RadGenType(string name, List<string> materials, string meshEntityClassname = "", bool isTransparent = false) : this(name, meshEntityClassname)
-            {
-                Materials = materials;
-                IsTransparent = isTransparent;
-            }
-
-            public RadGenType(string name, string material, string meshEntityClassname = "", bool isTransparent = false) : this(name, meshEntityClassname)
-            {
-                Materials.Add(material);
-                IsTransparent = isTransparent;
-            }
-
-            public bool MatchesMaterial(string material) => Materials.Contains(material);
-
-            public override string ToString()
-            {
-                var returnString = "";
-
-                returnString += $"RadGenType: Name {Name}, Materials " + "{";
-
-                foreach (var material in Materials)
-                {
-                    returnString += material + ", ";
-                }
-
-                returnString += "}" + $"MeshEntityClassname: {MeshEntityClassname}, IsTransparent {IsTransparent}";
-
-                return returnString;
-            }
         }
 
         // this exists simply because we need to pass this data around to basically everything and otherwise every function would need
@@ -96,8 +31,6 @@ namespace RadGenCore.Components
             public Dictionary<string, Resource> ModelResourceDict;
             public Dictionary<Guid, RadgenScene> ProcessedInstanceContents;
             public Dictionary<Guid, int> VisibilityDict;
-            public List<SelectionSet> SelectionSetsFound;
-            public RadGenType? SceneOverrideType;
             public string InitialVmapFolder;
         }
 
@@ -111,10 +44,6 @@ namespace RadGenCore.Components
             }
 
             var localVmapName = CurrentVmapName;
-
-            ModelsLogBuffer = "";
-            MeshesLogBuffer = "";
-
 
             if (!File.Exists(VmapFilePath))
             {
@@ -155,27 +84,6 @@ namespace RadGenCore.Components
             // uses its GUID for referencing, its therefor important we dont just loop every element in the datamodel because that makes no sense, we
             // need to follow the references inside of `world`
             var world = (Element)vmap.Root["world"];
-            var rootSelectionSet = (Element)vmap.Root["rootSelectionSet"];
-            vmapParserContext.SelectionSetsFound = GetRadGenSelectionSets(rootSelectionSet);
-
-            if (vmapParserContext.SelectionSetsFound.Count > 0)
-            {
-                var selectionSetLogString = "Selection sets found: '";
-
-                for (int i = 0; i < vmapParserContext.SelectionSetsFound.Count; i++)
-                {
-                    var selectionSet = vmapParserContext.SelectionSetsFound[i];
-                    selectionSetLogString += selectionSet.Name;
-
-                    if (i != vmapParserContext.SelectionSetsFound.Count - 1)
-                    {
-                        selectionSetLogString += ", ";
-                    }
-                }
-
-                selectionSetLogString += "'\n";
-
-            }
 
             // GUESS WHAT? THEY FIXED THE MISSPELLING!
             // now we have to check for both in case someone has an old vmap!
@@ -219,8 +127,6 @@ namespace RadGenCore.Components
             // when this is done the scene we passed into it should be filled out
             ParseGroup(world, ref parsedRadgenScene, vmapParserContext);
 
-
-
             return parsedRadgenScene;
         }
 
@@ -235,26 +141,23 @@ namespace RadGenCore.Components
             var groupChildren = (ElementArray)group["children"];
             foreach (var child in groupChildren)
             {
-                if (!vmapParserContext.OnlyParsePointEntities)
+                if (child.ClassName == "CMapGroup")
                 {
-                    if (child.ClassName == "CMapGroup")
-                    {
-                        ParseGroup(child, ref scene, vmapParserContext);
-                    }
+                    ParseGroup(child, ref scene, vmapParserContext);
+                }
 
-                    if (child.ClassName == "CMapPrefab")
-                    {
-                        ParseCMapPrefabElement(child, ref scene, vmapParserContext);
-                    }
+                if (child.ClassName == "CMapPrefab")
+                {
+                    ParseCMapPrefabElement(child, ref scene, vmapParserContext);
+                }
 
-                    if (child.ClassName == "CMapInstance")
-                    {
-                        var instance = ParseInstance(child, vmapParserContext);
+                if (child.ClassName == "CMapInstance")
+                {
+                    var instance = ParseInstance(child, vmapParserContext);
 
-                        if (instance != null)
-                        {
-                            scene.AddInstance(instance);
-                        }
+                    if (instance != null)
+                    {
+                        scene.AddInstance(instance);
                     }
                 }
 
@@ -280,23 +183,14 @@ namespace RadGenCore.Components
 
             vmapParserContext.VmapTransforms = transforms;
 
-            var diskVmapPath = Path.Combine(vmapParserContext.InitialVmapFolder, prefabVmapName);
+            var addonFolder = Directory.GetParent(vmapParserContext.InitialVmapFolder);
 
-            var selectionSet = IsContainedInSelectionSets(vmapParserContext.SelectionSetsFound, prefab.ID);
-
-            RadGenType? type = null;
-
-            if (selectionSet != null)
+            if(addonFolder == null)
             {
-                type = selectionSet.Value.Type;
+                return;
             }
 
-            if (vmapParserContext.SceneOverrideType != null)
-            {
-                type = vmapParserContext.SceneOverrideType;
-            }
-
-            vmapParserContext.SceneOverrideType = type;
+            var diskVmapPath = Path.Combine(addonFolder.FullName, prefabVmapName);
 
             var prefabScene = ParseVmap(diskVmapPath, vmapParserContext, true);
 
@@ -324,35 +218,11 @@ namespace RadGenCore.Components
 
             var classname = (string)entityProperties["classname"];
 
-            if (vmapParserContext.OnlyParsePointEntities)
+            var pointEntity = ParseRecognizedEntity(cMapEntity, entityKeyValues, classname, vmapParserContext);
+
+            if (pointEntity != null)
             {
-                var pointEntity = ParseRecognizedEntity(cMapEntity, entityKeyValues, classname, null, vmapParserContext);
-
-                if (pointEntity != null)
-                {
-                    scene.AddEntity(pointEntity);
-                }
-
-                return;
-            }
-
-            var selectionSet = IsContainedInSelectionSets(vmapParserContext.SelectionSetsFound, cMapEntity.ID);
-            var meshEntityType = MatchesWithMeshEntityClassname(classname);
-
-            RadGenType? recognizedEntityOverrideType = null;
-            if (selectionSet != null)
-                recognizedEntityOverrideType = selectionSet.Value.Type;
-
-            if (vmapParserContext.SceneOverrideType != null)
-            {
-                recognizedEntityOverrideType = vmapParserContext.SceneOverrideType;
-            }
-
-            var entity = ParseRecognizedEntity(cMapEntity, entityKeyValues, classname, recognizedEntityOverrideType, vmapParserContext);
-
-            if (entity != null)
-            {
-                scene.AddEntity(entity);
+                scene.AddEntity(pointEntity);
             }
         }
 
@@ -363,7 +233,7 @@ namespace RadGenCore.Components
             return newEntity;
         }
 
-        private static RadgenScene.Entity? ParseRecognizedEntity(Element entity, RadgenScene.KeyValues entityKv, string classname, RadGenType? overrideType, VmapParserContext vmapParserContext)
+        private static RadgenScene.Entity? ParseRecognizedEntity(Element entity, RadgenScene.KeyValues entityKv, string classname, VmapParserContext vmapParserContext)
         {
             switch (classname)
             {
@@ -421,8 +291,6 @@ namespace RadGenCore.Components
             return newInstance;
         }
 
-        #region Utils
-
         private static bool IsVisible(Guid elementID, Dictionary<Guid, int> visibilityDict)
         {
             bool containedInVisibilityDict = visibilityDict.TryGetValue(elementID, out var visibilityDictValue);
@@ -435,155 +303,5 @@ namespace RadGenCore.Components
             return false;
 
         }
-
-        private static RadGenType? MatchesWithMeshEntityClassname(string classname)
-        {
-            foreach (var type in RadGenTypes)
-            {
-                if (string.IsNullOrEmpty(type.MeshEntityClassname))
-                    continue;
-
-                if (type.MeshEntityClassname == classname)
-                    return type;
-            }
-
-            return null;
-        }
-
-        private static SelectionSet? IsContainedInSelectionSets(List<SelectionSet> selectionSets, Guid elementID)
-        {
-            foreach (var selectionSet in selectionSets)
-            {
-                foreach (var ID in selectionSet.IDs)
-                {
-                    if (ID == elementID)
-                    {
-                        return selectionSet;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        public record struct SelectionSet(RadGenType Type, string Name, List<Guid> IDs, List<int> Faces);
-        private static List<SelectionSet> GetRadGenSelectionSets(Element rootSelectionSet)
-        {
-            List<SelectionSet> returnSelectionSets = [];
-
-            var selectionSets = (ElementArray)rootSelectionSet["children"];
-            var validSelectionSetNames = GetRadgenSelectionSetNames();
-
-            // first loop for object selection sets
-            foreach (var selectionSet in selectionSets)
-            {
-                var selectionSetName = (string)selectionSet["selectionSetName"];
-
-                if (selectionSetName.ToLower() == "radgen")
-                {
-                    //returnSelectionSets[100] = new SelectionSet();
-
-                    throw new NotSupportedException($"Legacy 'radgen' selection set found in map '{CurrentVmapName}', please move the objects to their respective selection sets then remove this one.");
-
-                }
-
-                RadGenType? type = null;
-                foreach (var Type in RadGenTypes)
-                {
-                    if (selectionSetName == "radgen_" + Type.Name)
-                    {
-                        type = Type;
-                    }
-                }
-
-                if (type == null)
-                {
-                    continue;
-                }
-
-                var selectionSetDataObject = selectionSet["selectionSetData"];
-                if (selectionSetDataObject == null)
-                {
-                    continue;
-                }
-
-                var selectionSetData = (Element)selectionSet["selectionSetData"];
-                var selectionSetDataClassname = ((Element)selectionSetDataObject).ClassName;
-
-                var newSelectionSet = new SelectionSet();
-                newSelectionSet.IDs = new();
-                newSelectionSet.Name = selectionSetName;
-                newSelectionSet.Type = type;
-
-                // handle object selection set
-                if (selectionSetDataClassname == "CObjectSelectionSetDataElement")
-                {
-                    ElementArray? selectedObjects = null;
-                    if (selectionSetData.ContainsKey("selectedObjects"))
-                    {
-                        selectedObjects = (ElementArray)selectionSetData["selectedObjects"];
-                    }
-                    if (selectedObjects != null)
-                    {
-                        if (selectedObjects.Count > 0)
-                        {
-                            foreach (var element in selectedObjects)
-                            {
-                                newSelectionSet.IDs.Add(element.ID);
-                            }
-                        }
-                    }
-                }
-                else if (selectionSetDataClassname == "CFaceSelectionSetDataElement")
-                {
-                    newSelectionSet.Faces = new();
-
-                    ElementArray? selectedMeshes = null;
-                    if (selectionSetData.ContainsKey("meshes"))
-                    {
-                        selectedMeshes = (ElementArray)selectionSetData["meshes"];
-                    }
-                    if (selectedMeshes != null)
-                    {
-                        if (selectedMeshes.Count > 0)
-                        {
-                            foreach (var element in selectedMeshes)
-                            {
-                                newSelectionSet.IDs.Add(element.ID);
-                            }
-                        }
-                    }
-
-                    IntArray? faces = null;
-                    if (selectionSetData.ContainsKey("faces"))
-                    {
-                        faces = (IntArray)selectionSetData["faces"];
-                    }
-                    if (faces != null)
-                    {
-                        if (faces.Count > 0)
-                        {
-                            newSelectionSet.Faces.AddRange(faces);
-                        }
-                    }
-                }
-
-                returnSelectionSets.Add(newSelectionSet);
-            }
-            return returnSelectionSets;
-        }
-
-        private static string[] GetRadgenSelectionSetNames()
-        {
-            string[] names = new string[RadGenTypes.Count];
-            for (var i = 0; i < RadGenTypes.Count; i++)
-            {
-                names[i] = "radgen_" + RadGenTypes[i].Name;
-            }
-
-            return names;
-        }
-
-        #endregion
     }
 }

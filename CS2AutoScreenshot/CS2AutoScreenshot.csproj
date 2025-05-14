@@ -9,6 +9,7 @@
 	<SelfContained>true</SelfContained>
 	<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
 	<SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
+	<ApplicationIcon>misc\screenshot.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +21,10 @@
 
   <ItemGroup>
     <None Remove="misc\screenshot.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="misc\screenshot.ico" />
   </ItemGroup>
 
   <ItemGroup>

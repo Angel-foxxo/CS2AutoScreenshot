@@ -1,5 +1,6 @@
 using DarkModeForms;
 using System;
+using System.Globalization;
 using System.Windows.Forms;
 
 namespace CS2AutoScreenshot
@@ -12,9 +13,11 @@ namespace CS2AutoScreenshot
         [STAThread]
         public static void Main(string[] args)
         {
-
             try
             {
+                CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+                CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+
                 MainForm = new MainForm();
 
                 DarkModeCS.ThemeColors = DarkModeCS.GetAppTheme();

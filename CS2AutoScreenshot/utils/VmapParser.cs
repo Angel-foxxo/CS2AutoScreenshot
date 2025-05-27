@@ -213,7 +213,10 @@ namespace RadGenCore.Components
             var entityKeyValues = new RadgenScene.KeyValues();
             foreach (var kv in entityProperties)
             {
-                entityKeyValues.AddKey(kv.Key, (string)kv.Value);
+                if(kv.Value is string)
+                {
+                    entityKeyValues.AddKey(kv.Key, (string)kv.Value);
+                }
             }
 
             var classname = (string)entityProperties["classname"];

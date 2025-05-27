@@ -35,6 +35,9 @@ namespace CS2AutoScreenshot
                 }
             }
 
+            button1.Text = "Reading VMAP...";
+            Application.DoEvents();
+
             if (!string.IsNullOrEmpty(vmapFilePath))
             {
                 var context = new VmapParser.VmapParserContext
@@ -97,6 +100,8 @@ namespace CS2AutoScreenshot
 
                 codeTextBox1.Text = finalOutputCommand;
             }
+
+            button1.Text = "Select VMAP";
         }
 
         private List<Camera> GetPointCamerasFromScene(RadgenScene scene, RadgenScene.Transforms transforms)

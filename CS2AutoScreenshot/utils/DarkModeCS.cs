@@ -213,6 +213,7 @@ namespace DarkModeForms
                     ExpandMarkerBorderColor = ThemeColors.Border,
                     CollapseMarkerBorderColor = ThemeColors.BorderSoft
                 };
+                console.CaretColor = ThemeColors.Contrast;
                 console.ServiceColors = col;
                 console.ForeColor = ThemeColors.Contrast;
                 console.ShowLineNumbers = false;

@@ -94,11 +94,11 @@ namespace CS2AutoScreenshot
     };
             codeTextBox1.AutoScrollMinSize = new System.Drawing.Size(0, 14);
             codeTextBox1.BackBrush = null;
+            codeTextBox1.CaretBlinking = false;
             codeTextBox1.CharHeight = 14;
             codeTextBox1.CharWidth = 8;
             codeTextBox1.DisabledColor = System.Drawing.Color.FromArgb(100, 180, 180, 180);
             codeTextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            codeTextBox1.Font = new System.Drawing.Font("Courier New", 9.75F);
             codeTextBox1.Hotkeys = resources.GetString("codeTextBox1.Hotkeys");
             codeTextBox1.IsReplaceMode = false;
             codeTextBox1.Location = new System.Drawing.Point(3, 19);

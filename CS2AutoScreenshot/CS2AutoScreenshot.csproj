@@ -10,6 +10,7 @@
 	<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
 	<SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
 	<ApplicationIcon>misc\screenshot.ico</ApplicationIcon>
+	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,11 +33,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FCTB" Version="2.16.24" />
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.183">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="ValveResourceFormat" Version="12.0.4261" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="utils\" />
   </ItemGroup>
 	
 

@@ -1,4 +1,6 @@
-﻿namespace CS2AutoScreenshot
+﻿using RadGenGUI.Controls;
+
+namespace CS2AutoScreenshot
 {
     partial class MainForm
     {
@@ -28,30 +30,19 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            textBox1 = new System.Windows.Forms.TextBox();
             splitContainer1 = new System.Windows.Forms.SplitContainer();
-            groupBox1 = new System.Windows.Forms.GroupBox();
+            groupBox1 = new BetterGroupBox();
+            codeTextBox1 = new CodeTextBox();
             button1 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
             groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)codeTextBox1).BeginInit();
             SuspendLayout();
-            // 
-            // textBox1
-            // 
-            textBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            textBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            textBox1.Location = new System.Drawing.Point(3, 19);
-            textBox1.MaxLength = 99999999;
-            textBox1.Multiline = true;
-            textBox1.Name = "textBox1";
-            textBox1.ReadOnly = true;
-            textBox1.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            textBox1.Size = new System.Drawing.Size(581, 307);
-            textBox1.TabIndex = 0;
             // 
             // splitContainer1
             // 
@@ -76,8 +67,9 @@
             // 
             // groupBox1
             // 
-            groupBox1.Controls.Add(textBox1);
+            groupBox1.Controls.Add(codeTextBox1);
             groupBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+            groupBox1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             groupBox1.Location = new System.Drawing.Point(0, 0);
             groupBox1.Name = "groupBox1";
             groupBox1.Size = new System.Drawing.Size(587, 329);
@@ -85,11 +77,48 @@
             groupBox1.TabStop = false;
             groupBox1.Text = "Text Output (copy to console)";
             // 
+            // codeTextBox1
+            // 
+            codeTextBox1.AutoCompleteBracketsList = new char[]
+    {
+    '(',
+    ')',
+    '{',
+    '}',
+    '[',
+    ']',
+    '"',
+    '"',
+    '\'',
+    '\''
+    };
+            codeTextBox1.AutoScrollMinSize = new System.Drawing.Size(0, 14);
+            codeTextBox1.BackBrush = null;
+            codeTextBox1.CharHeight = 14;
+            codeTextBox1.CharWidth = 8;
+            codeTextBox1.DisabledColor = System.Drawing.Color.FromArgb(100, 180, 180, 180);
+            codeTextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+            codeTextBox1.Font = new System.Drawing.Font("Courier New", 9.75F);
+            codeTextBox1.Hotkeys = resources.GetString("codeTextBox1.Hotkeys");
+            codeTextBox1.IsReplaceMode = false;
+            codeTextBox1.Location = new System.Drawing.Point(3, 19);
+            codeTextBox1.Name = "codeTextBox1";
+            codeTextBox1.Paddings = new System.Windows.Forms.Padding(0);
+            codeTextBox1.ReadOnly = true;
+            codeTextBox1.SelectionColor = System.Drawing.Color.FromArgb(60, 0, 0, 255);
+            codeTextBox1.ServiceColors = (FastColoredTextBoxNS.ServiceColors)resources.GetObject("codeTextBox1.ServiceColors");
+            codeTextBox1.ShowLineNumbers = false;
+            codeTextBox1.Size = new System.Drawing.Size(581, 307);
+            codeTextBox1.TabIndex = 0;
+            codeTextBox1.WordWrap = true;
+            codeTextBox1.Zoom = 100;
+            // 
             // button1
             // 
             button1.Dock = System.Windows.Forms.DockStyle.Fill;
             button1.FlatAppearance.BorderSize = 0;
             button1.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            button1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             button1.Location = new System.Drawing.Point(0, 0);
             button1.Name = "button1";
             button1.Size = new System.Drawing.Size(587, 39);
@@ -113,15 +142,14 @@
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
             groupBox1.ResumeLayout(false);
-            groupBox1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)codeTextBox1).EndInit();
             ResumeLayout(false);
         }
 
         #endregion
-
-        private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.GroupBox groupBox1;
+        private BetterGroupBox groupBox1;
+        private RadGenGUI.Controls.CodeTextBox codeTextBox1;
     }
 }

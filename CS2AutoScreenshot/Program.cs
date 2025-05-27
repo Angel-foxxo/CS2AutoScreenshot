@@ -1,3 +1,4 @@
+using DarkModeForms;
 using System;
 using System.Windows.Forms;
 
@@ -5,12 +6,21 @@ namespace CS2AutoScreenshot
 {
     class Program
     {
+        public static MainForm MainForm;
+        public static DarkModeCS DarkModeCS = new();
+
         [STAThread]
         public static void Main(string[] args)
         {
+
             try
             {
-                Application.Run(new MainForm());
+                MainForm = new MainForm();
+
+                DarkModeCS.ThemeColors = DarkModeCS.GetAppTheme();
+                DarkModeCS.Style(MainForm);
+
+                Application.Run(MainForm);
             }
             catch (Exception ex)
             {

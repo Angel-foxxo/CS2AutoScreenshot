@@ -25,7 +25,7 @@ namespace CS2AutoScreenshot
             var vmapFilePath = "";
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                openFileDialog.Filter = "VMAP Files|*.vmap|All files|*.*";
+                openFileDialog.Filter = "VMAP Files|*.vmap";
                 openFileDialog.Title = "Open VMAP File";
                 openFileDialog.FilterIndex = 1;
                 openFileDialog.RestoreDirectory = true;
@@ -69,7 +69,7 @@ namespace CS2AutoScreenshot
 
                 if (pointCameras.Count == 0)
                 {
-                    textBox1.Text = "Selected vmap has no point_camera entities!";
+                    codeTextBox1.Text = "Selected vmap has no point_camera entities!";
                     return;
                 }
 
@@ -95,7 +95,7 @@ namespace CS2AutoScreenshot
 
                 finalOutputCommand += "r_drawviewmodel 0;cl_drawhud 0;r_drawpanorama 0;ent_fire worldent FireUser1";
 
-                textBox1.Text = finalOutputCommand;
+                codeTextBox1.Text = finalOutputCommand;
             }
         }
 

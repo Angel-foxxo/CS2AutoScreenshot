@@ -224,6 +224,11 @@ namespace DarkModeForms
                 //hexViewer.BackColor = ControlPaint.Dark(ThemeColors.Control, -10);
                 //hexViewer.ForeColor = ThemeColors.TextActive;
             }
+            if(control is SettingsTableLayoutPanel settingsTableLayoutPanel)
+            {
+                settingsTableLayoutPanel.GridLineColor = ThemeColors.Border;
+                settingsTableLayoutPanel.GridLineWidth = 2;
+            }
             if (control.ContextMenuStrip != null)
             {
                 ThemeControl(control.ContextMenuStrip);

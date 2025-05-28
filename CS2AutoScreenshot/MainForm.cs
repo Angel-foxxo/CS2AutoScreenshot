@@ -1,15 +1,9 @@
 ﻿using RadGenCore.Components;
-using SharpGLTF.Schema2;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace CS2AutoScreenshot
@@ -24,8 +18,10 @@ namespace CS2AutoScreenshot
         }
 
         const string InitialText =
+            "This tool will scan your map for any 'point_camera' entities and construct a console command which will make the game take a screenshot from the perspective of each camera.\n\n" +
             "After selecting a VMAP, copy the generated commands from here to your console and hit enter (you should only do this in -tools mode).\n\n" +
-            "You can click 'Regenerate Commands' to manually regenerate the commands after tweaking settings!";
+            "You can click 'Regenerate Commands' to manually regenerate the commands after tweaking settings!\n\n" +
+            "If you edit the 'point_camera' entities in your vmap, you will need to reload it using the 'Select VMAP' button.";
 
         const string LoadingScreenModeText =
             "Loading screen mode enabled!\n\n" +
@@ -198,7 +194,14 @@ namespace CS2AutoScreenshot
                         fov = entity.KeyValues.GetValue<float>("fov");
                     }
 
-                    returnList.Add(new Camera(objTransforms, fov));
+                    string? name = null;
+
+                    if (entity.KeyValues.HasHey("targetname"))
+                    {
+                        name = entity.KeyValues.GetValue<string>("targetname");
+                    }
+
+                    returnList.Add(new Camera(objTransforms, fov, name ?? string.Empty));
                 }
             }
 
@@ -218,7 +221,7 @@ namespace CS2AutoScreenshot
             return returnList;
         }
 
-        private void FinaliseLoadingImages(string vmapPath)
+        private void FinaliseLoadingScreenImages(string vmapPath)
         {
             var tempPath = GetTempLoadingImagesPath(vmapPath);
             var loadingScreenImagesPath = GetLoadingScreenImagesPath(vmapPath);
@@ -270,7 +273,47 @@ namespace CS2AutoScreenshot
                 var vtexPngPath = Path.Combine(LoadingImagesPath, imageFileName).Replace("\\", "\\\\");
                 var vtexFile = VtexTemplate.Replace("IMAGE_PATH", vtexPngPath);
 
-                File.Copy(screenshots[i], Path.Combine(loadingScreenImagesPath, imageFileName), true);
+                var finalImagePath = Path.Combine(loadingScreenImagesPath, imageFileName);
+
+                if (TargetnameAsPlacename_Checkbox.Checked)
+                {
+                    using Image screenshotImage = Image.FromFile(screenshots[i]);
+
+                    if (CurrentCameras![i].Name != string.Empty)
+                    {
+                        var text = CurrentCameras![i].Name;
+
+                        using Graphics g = Graphics.FromImage(screenshotImage);
+
+                        g.DrawImage(screenshotImage, 0, 0);
+
+                        g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias | System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+                        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                        g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+
+                        float fontSize = screenshotImage.Height * 0.027f;
+
+                        float marginX = screenshotImage.Width * 0.022f;
+                        float marginY = screenshotImage.Height * 0.05f;
+
+                        using Font font = new Font("Bahnschrift Light Condensed", fontSize, FontStyle.Regular);
+                        using SolidBrush brush = new SolidBrush(Color.White);
+
+                        SizeF textSize = g.MeasureString(text, font);
+
+                        float x = marginX;
+                        float y = screenshotImage.Height - textSize.Height - marginY;
+
+                        g.DrawString(text, font, brush, x, y);
+                    }
+
+                    screenshotImage.Save(finalImagePath);
+                }
+                else
+                {
+                    File.Copy(screenshots[i], finalImagePath, true);
+                }
 
                 using (StreamWriter outputFile = new StreamWriter(Path.Combine(loadingScreenImagesPath, vtexFileName)))
                 {
@@ -290,11 +333,13 @@ namespace CS2AutoScreenshot
         {
             public RadgenScene.Transforms Transforms { private set; get; }
             public float FOV { private set; get; }
+            public string Name { private set; get; }
 
-            public Camera(RadgenScene.Transforms transforms, float fOV)
+            public Camera(RadgenScene.Transforms transforms, float fOV, string name)
             {
                 Transforms = transforms;
                 FOV = fOV;
+                Name = name;
             }
         }
 
@@ -481,6 +526,7 @@ namespace CS2AutoScreenshot
             if (betterCheckBox1.Checked)
             {
                 codeTextBox1.Text = LoadingScreenModeText;
+                TargetnameAsPlacename_Checkbox.Enabled = true;
                 SetOutputPathText();
 
             }
@@ -488,13 +534,14 @@ namespace CS2AutoScreenshot
             {
                 codeTextBox1.Text = InitialText;
                 betterButton1.Enabled = false;
+                TargetnameAsPlacename_Checkbox.Enabled = false;
                 SetOutputPathText();
             }
         }
 
         private void betterButton1_Click(object sender, EventArgs e)
         {
-            FinaliseLoadingImages(VmapFilePath!);
+            FinaliseLoadingScreenImages(VmapFilePath!);
         }
     }
 }

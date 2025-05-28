@@ -1,3 +1,5 @@
+![](readme_pic.png)
+
 # CS2AutoScreenshot
 This app will load a VMAP and read all of the `point_camera` entities from it, then create a list of console commands which when pasted into the console, will take screenshots of the map from the perspective of every `point_camera` it found.
 

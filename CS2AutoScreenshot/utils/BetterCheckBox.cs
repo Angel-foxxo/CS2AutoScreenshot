@@ -83,11 +83,11 @@ namespace RadGenGUI.Controls
                 e.Graphics.DrawLine(checkPen, checkMiddle, checkRight);
             }
 
-            var textSize = TextRenderer.MeasureText(Text, Program.MainForm.Font);
+            var textSize = TextRenderer.MeasureText(Text, Font);
             var textRect = new Rectangle(checkBoxRect.X + checkBoxRect.Width, checkBoxRect.Y + ((checkBoxRect.Height - textSize.Height) / 2), checkBoxRect.Width + textSize.Width, textSize.Height);
 
             using var foreBrush = new SolidBrush(foreColor);
-            TextRenderer.DrawText(e.Graphics, Text, Program.MainForm.Font, textRect, foreColor);
+            TextRenderer.DrawText(e.Graphics, Text, Font, textRect, foreColor);
         }
 
         protected override void OnMouseEnter(EventArgs eventargs)

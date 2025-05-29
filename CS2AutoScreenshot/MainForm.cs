@@ -64,7 +64,6 @@ namespace CS2AutoScreenshot
             "        \"CDmeTextureOutputChannel\"\r\n" +
             "        {\r\n" +
             "            \"m_inputTextureArray\" \"string_array\" [ \"InputTexture0\" ]\r\n" +
-            "" +
             "            \"m_srcChannels\" \"string\" \"rgba\"\r\n" +
             "            \"m_dstChannels\" \"string\" \"rgba\"\r\n" +
             "            \"m_mipAlgorithm\" \"CDmeImageProcessor\"\r\n" +
@@ -192,6 +191,11 @@ namespace CS2AutoScreenshot
                     if (entity.KeyValues.HasHey("fov"))
                     {
                         fov = entity.KeyValues.GetValue<float>("fov");
+                    }
+
+                    if (entity.KeyValues.HasHey("FOV"))
+                    {
+                        fov = entity.KeyValues.GetValue<float>("FOV");
                     }
 
                     string? name = null;
